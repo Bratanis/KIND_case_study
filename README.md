@@ -13,18 +13,18 @@
 - The application is running with user privileges, which helps mitigate some risks such as container breakout attacks. Root users can do anything in the system, including modifying the filesystem, creating devices, etc. Non-root users can't bind to ports below 1024. Spring Boot uses port 8080 by default, which is fine. 
 - The only thing the user will need is read access to the JAR file. This is accomplished with:
 ```
-RUN chmod 400 app.jar && \
-    addgroup --system --gid 999 appgroup && \
-    adduser --system --uid 999 --ingroup appgroup appuser && \
-    chown appuser:appgroup app.jar
+RUN addgroup -S -g 998 appgroup && \
+    adduser -S -u 998 -G appgroup appuser && \
+    chown root:appgroup app.jar && \
+    chmod 440 app.jar
 USER appuser
 ```
 
 - here is what happens:
-    - 1) owner (initially root) can only read the file, group members and others have no permissions
     - 2) create a new system group for the container. The Group ID (and User ID) < 1000 is convention for system accounts.
     - 3) create a dedicated system user (no login and no home dir) with minimal privileges, makes the user a member of the appgroup. 
-    - 4) give appuser and appgroup the ownership to the jar file
+    - 1) ensure the owner is root. Allow the group members to access the file.
+    - 4) set root and appgroup permissions to readonly. No permissions for anybody else
     - 5) set the default user for the container runtime. Without this, the container processes would run as root by default
     - Effect: 
         - Only appuser can read the file
@@ -38,6 +38,8 @@ USER appuser
     - Extracts and loads the classes, resources, and metadata
     - Executes the code from memory
     - The JVM never needs to: Execute the JAR as a binary
+
+- Originally *eclipse-temurin:21* was used as base image. While mostly okay, it provided bash, sudo, and other programs that are a) not needed and b) increase the attack surface. Using a distroless image and a seperate builder image was an overkill, I settled on suing the minimal *eclipse-temurin:21-jre-alpine* base image. This makes Lotl attacks more difficult.
 
 
 

@@ -1,13 +1,13 @@
-FROM eclipse-temurin:21
+FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
 
 COPY target/demo_clicker-0.0.1-SNAPSHOT.jar app.jar
 
-RUN chmod 400 app.jar && \
-    addgroup --system --gid 999 appgroup && \
-    adduser --system --uid 999 --ingroup appgroup appuser && \
-    chown appuser:appgroup app.jar
+RUN addgroup -S -g 998 appgroup && \
+    adduser -S -u 998 -G appgroup appuser && \
+    chown root:appgroup app.jar && \
+    chmod 440 app.jar
 USER appuser
 
 EXPOSE 8080
