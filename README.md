@@ -21,9 +21,9 @@ USER appuser
 ```
 
 - here is what happens:
-    - 2) create a new system group for the container. The Group ID (and User ID) < 1000 is convention for system accounts.
-    - 3) create a dedicated system user (no login and no home dir) with minimal privileges, makes the user a member of the appgroup. 
-    - 1) ensure the owner is root. Allow the group members to access the file.
+    - 1) create a new system group for the container. The Group ID (and User ID) < 1000 is convention for system accounts.
+    - 2) create a dedicated system user (no login and no home dir) with minimal privileges, makes the user a member of the appgroup. 
+    - 3) ensure the owner is root. Allow the group members to access the file.
     - 4) set root and appgroup permissions to readonly. No permissions for anybody else
     - 5) set the default user for the container runtime. Without this, the container processes would run as root by default
     - Effect: 
