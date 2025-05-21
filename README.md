@@ -21,7 +21,7 @@ USER appuser
 ```
 
 - here is what happens:
-    - 1) create a new system group for the container. The Group ID (and User ID) < 1000 is convention for system accounts.
+    - 1) create a new system group for the container. The Group ID (and User ID) < 1000 is convention for system accounts. Might be redundant when using kubernetes.
     - 2) create a dedicated system user (no login and no home dir) with minimal privileges, makes the user a member of the appgroup. 
     - 3) ensure the owner is root. Allow the group members to access the file.
     - 4) set root and appgroup permissions to readonly. No permissions for anybody else
@@ -41,6 +41,12 @@ USER appuser
 
 - Originally *eclipse-temurin:21* was used as base image. While mostly okay, it provided bash, sudo, and other programs that are a) not needed and b) increase the attack surface. Using a distroless image and a seperate builder image was an overkill, I settled on suing the minimal *eclipse-temurin:21-jre-alpine* base image. This makes Lotl attacks more difficult.
 
+
+
+### Phase 3: kubernetes
+- The tools I used for this part are:
+    - **kubectl** for
+    - **minikube** for creating and running clusters locally (useful for testing before deploying in production).
 
 
 ## Tech stack
