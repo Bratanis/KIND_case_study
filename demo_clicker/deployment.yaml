@@ -62,7 +62,7 @@ spec:
   - port: 80
     targetPort: 8080
     name: http
-  type: ClusterIP
+  type: LoadBalancer  # Changed from ClusterIP
 ---
 # Management service (cluster-internal only)
 apiVersion: v1
