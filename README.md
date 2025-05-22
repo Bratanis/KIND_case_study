@@ -5,6 +5,7 @@
 - The app uses simple **RESTful api** and provides the bare-bones functionality.
 - I could have built the app using python with flask which would have been faster and possibly even lighter. As the goal of the project was to showcase security features, I opted instead for **Java** with **Spring Boot** and **Spring Security**, as these are widely used in enterprise environments and provide excellent security out of the box. For example Spring Security give us a **log-in form** with **protection against SQL injections** and **defence against Cross-Site Request Forgery**. Were this a proper web application, and not a simple cookie-clicker, the spring framework would have made securing the web application much easier.
 - Important to note here is that the app handles **CSRF tokens**. This is like a special stamp that only you and the legitimate website know about. For example if you're logged in your bank and visit a malicious site, that site could make your browser send a request to transfer money from your account. But since the attacker doesn't have the CSRF token, the request fails.
+- I have added custom endpoint that can be accessed without login to check application health. For that I've used the springboot actuator. It is running on a port separate from the actual application and is secured that the only information it provides is "UP" or "DOWN", minimizing risks.
 
 ### Phase 2: dockerization
 - The docker file goes through the standard process of [containerizing a springboot app](https://spring.io/guides/gs/spring-boot-docker)
@@ -17,15 +18,16 @@ RUN addgroup -S -g 998 appgroup && \
     adduser -S -u 998 -G appgroup appuser && \
     chown root:appgroup app.jar && \
     chmod 440 app.jar
-USER appuser
+
+USER 998
 ```
 
 - here is what happens:
-    - 1) create a new system group for the container. The Group ID (and User ID) < 1000 is convention for system accounts. Might be redundant when using kubernetes.
+    - 1) create a new system group for the container. The Group ID (and User ID) < 1000 is convention for system accounts.
     - 2) create a dedicated system user (no login and no home dir) with minimal privileges, makes the user a member of the appgroup. 
-    - 3) ensure the owner is root. Allow the group members to access the file.
+    - 3) ensure the owner is root. Allow the appgroup members to access the file.
     - 4) set root and appgroup permissions to readonly. No permissions for anybody else
-    - 5) set the default user for the container runtime. Without this, the container processes would run as root by default
+    - 5) set the default user for the container runtime. Without this, the container processes would run as root by default. We are giing the uid, so kubernetes can later validate that the user is not root.
     - Effect: 
         - Only appuser can read the file
         - No one (not even appuser) can write to or execute the file
@@ -44,15 +46,13 @@ USER appuser
 
 
 ### Phase 3: kubernetes
-- The tools I used for this part are:
-    - **kubectl** for
-    - **minikube** for creating and running clusters locally (useful for testing before deploying in production).
+- Originally I used **minikube** for creating and running clusters locally (useful for testing before deploying in production). However since multi-node clusters are experimental and the assignment clearly prefered kind over minikube, I decided to use that.
 
 
 ## Tech stack
 
 - Java, Maven, Spring Boot
-- Docker, Kubernetes
+- Docker, Kubernetes (kubectl, kind)
 
 ## Sources
 - https://spring.io/guides/gs/spring-boot-docker
