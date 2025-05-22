@@ -8,7 +8,8 @@ RUN addgroup -S -g 998 appgroup && \
     adduser -S -u 998 -G appgroup appuser && \
     chown root:appgroup app.jar && \
     chmod 440 app.jar
-USER appuser
+
+USER 998
 
 EXPOSE 8080
 

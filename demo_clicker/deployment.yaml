@@ -16,7 +16,10 @@ spec:
       - name: demo-clicker
         image: demo-clicker:v1
         ports:
-        - containerPort: 8080
+        - containerPort: 8080  # application port
+          name: http
+        - containerPort: 8081  # management/health port
+          name: management
         resources:
           limits:
             cpu: "0.5"
@@ -26,21 +29,28 @@ spec:
             memory: "256Mi"
         securityContext:
           allowPrivilegeEscalation: false
-          runAsUser: 998
           runAsNonRoot: true
+        env:
+        - name: MANAGEMENT_SERVER_PORT
+          value: "8081"
+        - name: MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE
+          value: "health"
+        - name: MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS
+          value: "never"
         livenessProbe:
           httpGet:
-            path: /
-            port: 8080
+            path: /actuator/health
+            port: 8081
           initialDelaySeconds: 30
           periodSeconds: 30
         readinessProbe:
           httpGet:
-            path: /count
-            port: 8080
+            path: /actuator/health
+            port: 8081
           initialDelaySeconds: 5
           periodSeconds: 10
 ---
+# Main application service
 apiVersion: v1
 kind: Service
 metadata:
@@ -51,4 +61,19 @@ spec:
   ports:
   - port: 80
     targetPort: 8080
+    name: http
+  type: ClusterIP
+---
+# Management service (cluster-internal only)
+apiVersion: v1
+kind: Service
+metadata:
+  name: demo-clicker-management
+spec:
+  selector:
+    app: demo-clicker
+  ports:
+  - port: 8081
+    targetPort: 8081
+    name: management
   type: ClusterIP
