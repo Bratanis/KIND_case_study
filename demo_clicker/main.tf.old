@@ -1,0 +1,250 @@
+# main.tf
+terraform {
+  required_providers {
+    kind = {
+      source  = "tehcyx/kind"
+      version = "~> 0.9.0"
+    }
+    kubernetes = {
+      source  = "hashicorp/kubernetes"
+      version = "~> 2.37.1"
+    }
+    # For nginx
+    helm = {
+      source  = "hashicorp/helm"
+      version = "~> 3.0.0"
+    }
+  }
+}
+
+# KIND cluster
+resource "kind_cluster" "default" {
+  name = "demo-cluster"
+  
+  kind_config {
+    kind        = "Cluster"
+    api_version = "kind.x-k8s.io/v1alpha4"
+    
+    node {
+        role = "control-plane"
+
+        kubeadm_config_patches = [
+            "kind: InitConfiguration\nnodeRegistration:\n  kubeletExtraArgs:\n    node-labels: \"ingress-ready=true\"\n"
+        ]
+
+        extra_port_mappings {
+            container_port = 80
+            host_port      = 80
+        }
+        extra_port_mappings {
+            container_port = 443
+            host_port      = 443
+        }
+    }
+    
+    node { role = "worker" }
+    node { role = "worker" }
+  }
+}
+
+# How to connect to cluster
+provider "kubernetes" {
+  config_path = "~/.kube/config"
+  config_context = "kind-demo-cluster"
+}
+
+provider "helm" {
+  kubernetes {
+    config_path = "~/.kube/config"
+    config_context = "kind-demo-cluster"
+  }
+}
+
+resource "helm_release" "nginx_ingress" {
+  name       = "nginx-ingress-controller"
+  repository = "https://charts.bitnami.com/bitnami"
+  chart      = "nginx-ingress-controller"
+  namespace  = "ingress-nginx"
+  create_namespace = true
+
+  
+  # KIND-specific values
+  set = [
+    {
+      name  = "controller.service.type"
+      value = "LoadBalancer"
+    }
+    {
+      name  = "controller.service.ports.http"
+      value = "80"
+    }
+    {
+      name  = "controller.service.ports.https" 
+      value = "443"
+    }
+  ]
+
+  depends_on = [kind_cluster.default]
+}
+
+resource "kubernetes_namespace" "environments" {
+  for_each = toset(["dev", "test", "prod"])
+  
+  metadata {
+    name = each.value
+  }
+  
+  depends_on = [kind_cluster.default]
+}
+
+resource "kubernetes_deployment" "demo_clicker" {
+  for_each = toset(["dev", "test", "prod"])
+  
+  metadata {
+    name      = "demo-clicker-deployment"
+    namespace = each.value
+  }
+  
+  spec {
+    replicas = 2
+    
+    selector {
+      match_labels = {
+        app = "demo-clicker"
+        env = each.value
+      }
+    }
+    
+    template {
+      metadata {
+        labels = {
+          app = "demo-clicker"
+          env = each.value
+        }
+      }
+      
+      spec {
+        container {
+          name  = "demo-clicker"
+          image = "demo-clicker:v1"
+          
+          port {
+            container_port = 8080
+            name          = "http"
+          }
+          
+          resources {
+            limits = {
+              cpu    = "0.5"
+              memory = "512Mi"
+            }
+            requests = {
+              cpu    = "0.2"
+              memory = "256Mi"
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  depends_on = [kubernetes_namespace.environments]
+}
+
+# Services for each environment
+resource "kubernetes_service" "demo_clicker" {
+  for_each = toset(["dev", "test", "prod"])
+  
+  metadata {
+    name      = "demo-clicker"
+    namespace = each.value
+  }
+  
+  spec {
+    selector = {
+      app = "demo-clicker"
+      env = each.value
+    }
+    
+    port {
+      port        = 80
+      target_port = 8080
+      protocol    = "TCP"
+    }
+    
+    type = "ClusterIP"  # Internal service, not LoadBalancer
+  }
+  
+  depends_on = [kubernetes_deployment.demo_clicker]
+}
+
+# Ingress rules for routing
+resource "kubernetes_ingress_v1" "demo_clicker" {
+  metadata {
+    name      = "demo-clicker-ingress"
+    namespace = "default"
+    
+    annotations = {
+      "kubernetes.io/ingress.class"                = "nginx"
+      "nginx.ingress.kubernetes.io/rewrite-target" = "/"
+    }
+  }
+  
+  spec {
+    rule {
+      host = "localhost"
+      
+      http {
+        # Dev environment
+        path {
+          path      = "/dev"
+          path_type = "Prefix"
+          
+          backend {
+            service {
+              name = "demo-clicker"
+              port {
+                number = 80
+              }
+            }
+          }
+        }
+        
+        # Test environment  
+        path {
+          path      = "/test"
+          path_type = "Prefix"
+          
+          backend {
+            service {
+              name = "demo-clicker"
+              port {
+                number = 80
+              }
+            }
+          }
+        }
+        
+        # Prod environment
+        path {
+          path      = "/prod"
+          path_type = "Prefix"
+          
+          backend {
+            service {
+              name = "demo-clicker"
+              port {
+                number = 80
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  depends_on = [
+    helm_release.nginx_ingress,
+    kubernetes_service.demo_clicker
+  ]
+}

@@ -56,3 +56,6 @@ USER 998
 
 ## Sources
 - https://spring.io/guides/gs/spring-boot-docker
+- https://registry.terraform.io/providers
+- https://www.youtube.com/watch?v=Nm2c9xvGMpU
+- https://kubernetes.io/docs/concepts/services-networking/ingress/
