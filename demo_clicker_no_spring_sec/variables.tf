@@ -23,3 +23,51 @@ variable "ingress_nginx_namespace" {
   description = "The nginx ingress namespace (it will be created if needed)."
   default     = "ingress-nginx"
 }
+
+
+variable "environment" {
+  type        = string
+  description = "Environment name (dev/test/prod)"
+}
+
+variable "replica_count" {
+  type        = number
+  description = "Number of replicas"
+  default     = 2
+}
+
+variable "image_tag" {
+  type        = string
+  description = "Docker image tag"
+  default     = "v1"
+}
+
+variable "ingress_host" {
+  type        = string
+  description = "Ingress host"
+  default     = "localhost"
+}
+
+variable "cpu_limit" {
+  type        = string
+  description = "CPU limit"
+  default     = "0.5"
+}
+
+variable "memory_limit" {
+  type        = string
+  description = "Memory limit"
+  default     = "1Gi"
+}
+
+variable "cpu_request" {
+  type        = string
+  description = "CPU request"
+  default     = "0.1"
+}
+
+variable "memory_request" {
+  type        = string
+  description = "Memory request"
+  default = "512Mi"
+}

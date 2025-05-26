@@ -2,23 +2,24 @@
 
 provider "helm" {
   kubernetes {
-    config_path = pathexpand(var.kind_cluster_config_path)
+  # config_path = pathexpand(var.kind_cluster_config_path)
+  config_path = pathexpand("~/.kube/config-${var.environment}")
   }
 }
 
 resource "helm_release" "ingress_nginx" {
-  name       = "ingress-nginx"
+  name       = "ingress-nginx-${var.environment}"
   repository = "https://kubernetes.github.io/ingress-nginx"
   chart      = "ingress-nginx"
   version    = var.ingress_nginx_helm_version
 
-  namespace        = var.ingress_nginx_namespace
+  namespace        = "${var.ingress_nginx_namespace}-${var.environment}"
   create_namespace = true
 
   values = [file("nginx_ingress_values.yaml")]
 
-    timeout = 300
-    wait = true
+  timeout = 300
+  wait    = true
 
   depends_on = [kind_cluster.default]
 }
@@ -28,16 +29,26 @@ resource "null_resource" "wait_for_ingress_nginx" {
     key = uuid()
   }
 
+  # provisioner "local-exec" {
+  #   command = <<EOF
+  #     printf "\nWaiting for the nginx ingress controller...\n"
+  #
+  #     kubectl wait --namespace ${helm_release.ingress_nginx.namespace} \
+  #       --for=condition=ready pod \
+  #       --selector=app.kubernetes.io/component=controller \
+  #       --timeout=90s
+  #   EOF
+  # }
   provisioner "local-exec" {
     command = <<EOF
       printf "\nWaiting for the nginx ingress controller...\n"
 
       kubectl wait --namespace ${helm_release.ingress_nginx.namespace} \
+        --kubeconfig ~/.kube/config-${var.environment} \
         --for=condition=ready pod \
         --selector=app.kubernetes.io/component=controller \
         --timeout=90s
     EOF
   }
-
   depends_on = [helm_release.ingress_nginx]
 }

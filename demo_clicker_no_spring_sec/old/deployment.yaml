@@ -1,20 +1,22 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: demo-clicker-deployment
+  name: demo-clicker-deployment-${environment}
 spec:
-  replicas: 2
+  replicas: ${replica_count}
   selector:
     matchLabels:
-      app: demo-clicker
+      app: demo-clicker-${environment}
   template:
     metadata:
       labels:
-        app: demo-clicker
+        app: demo-clicker-${environment}
+        environment: ${environment}
     spec:
       containers:
       - name: demo-clicker
-        image: demo-clicker:v2
+        image: demo-clicker:${image_tag}
+
         ports:
         - containerPort: 8080  # application port
           name: http
@@ -22,11 +24,11 @@ spec:
           name: management
         resources:
           limits:
-            cpu: "0.5"
-            memory: "512Mi"
+            cpu: ${cpu_limit}
+            memory: ${memory_limit}
           requests:
-            cpu: "0.2"
-            memory: "256Mi"
+            cpu: ${cpu_request}
+            memory: ${memory_request}
         securityContext:
           allowPrivilegeEscalation: false
           runAsNonRoot: true
@@ -49,29 +51,31 @@ spec:
             port: 8081
           initialDelaySeconds: 5
           periodSeconds: 10
----
+
+# ---
 # Main application service
 apiVersion: v1
 kind: Service
 metadata:
-  name: demo-clicker
+  name: demo-clicker-${environment}
 spec:
   selector:
-    app: demo-clicker
+    app: demo-clicker-${environment}
+
   ports:
   - port: 80
     targetPort: 8080
     name: http
   type: ClusterIP 
----
+# ---
 # Management service (cluster-internal only)
 apiVersion: v1
 kind: Service
 metadata:
-  name: demo-clicker-management
+  name: demo-clicker-management-${environment}
 spec:
   selector:
-    app: demo-clicker
+    app: demo-clicker-${environment}
   ports:
   - port: 8081
     targetPort: 8081
@@ -79,20 +83,22 @@ spec:
   type: ClusterIP
 
 
+# ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: demo-clicker-ingress
+  name: demo-clicker-ingress-${environment}
+  namespace: demo-clicker-${environment}
 spec:
   ingressClassName: nginx
   rules:
-  - host: localhost
+  - host: ${ingress_host}
     http:
       paths:
       - path: /
         pathType: Prefix
         backend:
           service:
-            name: demo-clicker
+            name: demo-clicker-${environment}
             port:
               number: 80
