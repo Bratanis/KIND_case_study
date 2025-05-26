@@ -71,3 +71,15 @@ variable "memory_request" {
   description = "Memory request"
   default = "512Mi"
 }
+
+variable "host_http_port" {
+  type        = number
+  description = "Host port for HTTP traffic"
+  default     = 80
+}
+
+variable "host_https_port" {
+  type        = number
+  description = "Host port for HTTPS traffic"
+  default     = 443
+}

@@ -45,8 +45,46 @@ USER 998
 
 
 
-### Phase 3: kubernetes
+### Phase 3: kubernetes + terraform
 - Originally I used **minikube** for creating and running clusters locally (useful for testing before deploying in production). However since multi-node clusters are experimental and the assignment clearly prefered kind over minikube, I decided to use that.
+Based on your Terraform configuration, here's the step-by-step process for building infrastructure and deploying the application:
+
+#### Infrastructure Build Steps
+
+1. **Create KIND Cluster** (`kind_cluster.tf`)
+   - Creates a multi-node KIND cluster with control-plane and worker nodes
+   - Sets up port mappings (80, 443) for ingress traffic
+   - Generates kubeconfig at `~/.kube/config-{environment}`
+
+2. **Install NGINX Ingress Controller** (`nginx_ingress.tf`)
+   - Deploys NGINX ingress using Helm chart
+   - Configures it with custom values from `nginx_ingress_values.yaml`
+   - Waits for ingress controller pods to be ready
+
+3. **Load Docker Image** (`kubernetes.tf`)
+   - Loads the `demo-clicker:{image_tag}` Docker image into the KIND cluster
+   - Triggered by cluster creation and image tag changes
+
+## Application Deployment Steps
+
+4. **Create Namespace**
+   - Creates `demo-clicker-{environment}` namespace
+
+5. **Deploy Application** 
+   - Creates Kubernetes deployment with specified replica count
+   - Configures container with ports 8080 (app) and 8081 (management)
+   - Sets resource limits/requests and security context
+   - Configures health/readiness probes on management port
+
+6. **Create Services**
+   - Main service: Exposes port 80 → 8080 for application traffic
+   - Management service: Exposes port 8081 for health checks (cluster-internal)
+
+7. **Setup Ingress**
+   - Creates ingress rule routing `{environment}.localhost` to the main service
+   - Uses NGINX ingress class
+
+The system uses environment-specific `.tfvars` files to configure different resource allocations and replica counts for dev/test/prod environments.
 
 
 ## Tech stack

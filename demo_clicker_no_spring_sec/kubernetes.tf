@@ -1,5 +1,11 @@
 # kubernetes.tf
 
+provider "kubernetes" {
+  config_path    = pathexpand("~/.kube/config-${var.environment}")
+  config_context = "kind-${var.kind_cluster_name}-${var.environment}"
+}
+
+
 resource "null_resource" "load_docker_image" {
   triggers = {
     cluster_id = kind_cluster.default.id
@@ -172,6 +178,13 @@ resource "kubernetes_ingress_v1" "app" {
   metadata {
     name      = "demo-clicker-ingress-${var.environment}"
     namespace = kubernetes_namespace.app.metadata[0].name
+     
+    annotations = {
+      "nginx.ingress.kubernetes.io/affinity" = "cookie"
+      "nginx.ingress.kubernetes.io/session-cookie-name" = "demo-clicker-sticky"
+      "nginx.ingress.kubernetes.io/session-cookie-expires" = "86400"
+      "nginx.ingress.kubernetes.io/session-cookie-max-age" = "86400"
+    }
   }
   
   spec {

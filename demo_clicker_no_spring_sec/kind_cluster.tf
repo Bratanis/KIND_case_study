@@ -3,10 +3,10 @@
 provider "kind" {
 }
 
-provider "kubernetes" {
-  config_path    = pathexpand("~/.kube/config-${var.environment}")
-  config_context = "kind-${var.kind_cluster_name}-${var.environment}"
-}
+# provider "kubernetes" {
+#   config_path    = pathexpand("~/.kube/config-${var.environment}")
+#   config_context = "kind-${var.kind_cluster_name}-${var.environment}"
+# }
 
 # resource "kubernetes_manifest" "deployment" {
 #   depends_on = [kind_cluster.default]
@@ -37,14 +37,24 @@ resource "kind_cluster" "default" {
       kubeadm_config_patches = [
         "kind: InitConfiguration\nnodeRegistration:\n  kubeletExtraArgs:\n    node-labels: \"ingress-ready=true\"\n"
       ]
+
       extra_port_mappings {
         container_port = 80
-        host_port      = 80
+        host_port = var.host_http_port
       }
       extra_port_mappings {
         container_port = 443
-        host_port      = 443
+        host_port = var.host_https_port
       }
+
+      # extra_port_mappings {
+      #   container_port = 80
+      #   host_port      = 80
+      # }
+      # extra_port_mappings {
+      #   container_port = 443
+      #   host_port      = 443
+      # }
     }
 
     node {

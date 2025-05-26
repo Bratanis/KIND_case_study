@@ -1,6 +1,9 @@
 environment   = "prod"
-replica_count = 3
-image_tag     = "latest"
+replica_count = 4
+image_tag     = "prod"
 ingress_host  = "prod.localhost"
-cpu_limit     = "1.0"
+cpu_limit     = "0.5"
 memory_limit  = "1Gi"
+host_http_port  = 80
+host_https_port = 443
+
