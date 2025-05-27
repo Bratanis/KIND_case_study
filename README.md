@@ -6,6 +6,32 @@
 ![Project layout](./docs/arch.jpg)
 
 
+## How to deploy
+
+1) clone the repo locally
+
+2) make sure you have all the necessary tools (docker, terraform, etc)
+
+3) Optionally generate the app jar with `mvn clean install`. This repo includes a pre-compiled jar. 
+
+4) Go to deployment and run the *start.sh* script with the name of the env you want to set up. The allowed envs are 'dev', 'test' and 'prod'. The script will:
+    
+    - set up the desired env/workspace
+    - initialize
+    - prepare the docker image from the jar
+    - set up the Infrastructure
+    - deploy the application
+
+
+5) After everything is ready you should be able to test the application at:
+    
+    - http://prod.localhost
+    - http://test.localhost:8080
+    - http://dev.localhost:7070
+
+
+
+
 ## Developments steps:
 ### Phase 1: the app itself
 - The app uses simple **RESTful api** and provides the bare-bones functionality.
@@ -76,10 +102,11 @@ Based on your Terraform configuration, here's the step-by-step process for build
    - Creates `demo-clicker-{environment}` namespace
 
 5. **Deploy Application** 
-   - Creates Kubernetes deployment with specified replica count
+   - Creates Kubernetes deployment with specified replica count 
    - Configures container with ports 8080 (app) and 8081 (management)
    - Sets resource limits/requests and security context
    - Configures health/readiness probes on management port
+   - For example 'prod' gets more replicas with more ressources
 
 6. **Create Services**
    - Main service: Exposes port 80 → 8080 for application traffic
