@@ -1,4 +1,10 @@
-# KIND_case_study
+# About the project
+
+
+![DevSecOps](./docs/devsecops.jpg)
+![Defence](./docs/defence.jpg)
+![Project layout](./docs/arch.jpg)
+
 
 ## Developments steps:
 ### Phase 1: the app itself
@@ -63,9 +69,8 @@ Based on your Terraform configuration, here's the step-by-step process for build
 
 3. **Load Docker Image** (`kubernetes.tf`)
    - Loads the `demo-clicker:{image_tag}` Docker image into the KIND cluster
-   - Triggered by cluster creation and image tag changes
 
-## Application Deployment Steps
+#### Application Deployment Steps
 
 4. **Create Namespace**
    - Creates `demo-clicker-{environment}` namespace
@@ -87,13 +92,24 @@ Based on your Terraform configuration, here's the step-by-step process for build
 The system uses environment-specific `.tfvars` files to configure different resource allocations and replica counts for dev/test/prod environments.
 
 
+    
+### Phase 4: What remains
+
+- HTTPS & cert management
+- Enable Spring Security with login
+- Secure namepaces and establish RBAC
+- GitOps with ArgoCD
+
+
 ## Tech stack
 
 - Java, Maven, Spring Boot
 - Docker, Kubernetes (kubectl, kind)
+- Terraform, Nginx
 
 ## Sources
 - https://spring.io/guides/gs/spring-boot-docker
 - https://registry.terraform.io/providers
 - https://www.youtube.com/watch?v=Nm2c9xvGMpU
-- https://kubernetes.io/docs/concepts/services-networking/ingress/
+- https://kubernetes.io/docs/concepts/services-networking/ingress
+- https://docs.nginx.com/nginx-ingress-controller/installation/installing-nic/installation-with-helm
