@@ -12,9 +12,11 @@
 
 2) make sure you have all the necessary tools (docker, terraform, etc)
 
-3) Optionally generate the app jar with `mvn clean install`. This repo includes a pre-compiled jar. 
+3) Navigate to demo_clicker_present
 
-4) Go to deployment and run the *start.sh* script with the name of the env you want to set up. The allowed envs are 'dev', 'test' and 'prod'. The script will:
+4) Optionally generate the app jar with `mvn clean install`. This repo includes a pre-compiled jar. 
+
+5) Go to deployment and run the *start.sh* script with the name of the env you want to set up. The allowed envs are 'dev', 'test' and 'prod'. The script will:
     
     - set up the desired env/workspace
     - initialize
@@ -23,7 +25,7 @@
     - deploy the application
 
 
-5) After everything is ready you should be able to test the application at:
+6) After everything is ready you should be able to test the application at:
     
     - http://prod.localhost
     - http://test.localhost:8080
